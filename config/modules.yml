@@ -1,0 +1,13 @@
+before_bundle:
+  - View
+  - Assets
+  - Gitignore
+  - Env
+  - Dir
+  - Test
+  - Gems
+  - Deployment
+  - Devise
+  - Uncomment
+after_bundle:
+  - Branch

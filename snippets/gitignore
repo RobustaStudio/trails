@@ -1,0 +1,17 @@
+/.bundle
+/.ruby-gemset
+/.ruby-version
+/.rvmrc
+/config/database.yml
+/config/mail.yml
+/config/secrets.yml
+/config/twilio.yml
+/config/aws.yml
+/log/*.log
+/public/assets
+/public/system
+/tmp
+/.idea
+/.capistrano
+/coverage
+dump.rdb
