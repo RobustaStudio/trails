@@ -1,5 +1,18 @@
 # TRails Application Generator
-## Application Generation command
+
+## Getting started
+
+you can use TRails to generate rails application with some enhancements we
+all do after generating our rails project such as adding rspec, factory_girl
+and other several modifications.
+
+### Online command
+
+```bash
+rails new blog --skip-turbolinks -T -G -d=mysql -m https://raw.githubusercontent.com/RobustaStudio/trails/master/bin/trails.rb
+```
+
+### General command
 
 ```bash
 $ rails new <project-name> --skip-turbolinks -T -G -d=<db-name> -m path/to/bin/trails.rb
