@@ -21,15 +21,10 @@ OUTPUT = <<-EOT
 SNIPPETS = #{SNIPPETS}
 #{MODULES}
 
-def execute_modules(hook)
-  MODULES[hook].each do |module_name|
-    klass = eval "\#{module_name}Module"
-    klass.call self
-  end
+MODULES.each do |module_name|
+  klass = eval "\#{module_name}Module"
+  klass.call self
 end
-
-execute_modules 'before_bundle'
-after_bundle { execute_modules 'after_bundle' }
 EOT
 
 File.write(TARGET, OUTPUT)

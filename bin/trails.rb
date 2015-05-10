@@ -1,6 +1,6 @@
 BRANCHES = ["production", "staging"]
 DIRECTORIES = ["app/exceptions", "app/validators", "app/services"]
-MODULES = {"before_bundle"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment"], "after_bundle"=>["Branch"]}
+MODULES = ["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch"]
 UNCOMMENT = ["Gemfile", "config/routes.rb"]
 SNIPPETS = {:application_coffee=>"#= require jquery\n#= require jquery_ujs\n", :application_haml=>"!!!\n%html\n  %head\n    %title \"HAML'd\"\n    = stylesheet_link_tag    \"application\"\n    = javascript_include_tag \"application\"\n    = csrf_meta_tags\n  %body\n    = yield\n", :database_cleaner=>"require 'database_cleaner'\nRSpec.configure do |config|\n  config.before(:suite) do\n    DatabaseCleaner.strategy = :transaction\n    DatabaseCleaner.clean_with(:truncation)\n  end\n\n  config.around(:each) do |example|\n    DatabaseCleaner.cleaning do\n      example.run\n    end\n  end\nend\n", :development_prepend=>"# Stop sending emails check log for email body\nconfig.action_mailer.perform_deliveries = false\n", :factory_girl=>"require 'factory_girl'\nRSpec.configure do |config|\n  config.include FactoryGirl::Syntax::Methods\nend\n", :gitignore=>"/.bundle\n/.ruby-gemset\n/.ruby-version\n/.rvmrc\n/config/database.yml\n/config/mail.yml\n/config/secrets.yml\n/config/twilio.yml\n/config/aws.yml\n/log/*.log\n/public/assets\n/public/system\n/tmp\n/.idea\n/.capistrano\n/coverage\ndump.rdb\n", :spec_helper_prepend=>"require 'simplecov'\nDir['./spec/support/**/*.rb'].sort.each { |f| require f }\nSimpleCov.start 'rails'\n"}
 class AssetsModule
@@ -12,10 +12,12 @@ end
 
 class BranchModule
   def self.call(ctx)
-    ctx.git :init
-    ctx.git add: '.'
-    ctx.git commit: "-m 'Initial commit'"
-    BRANCHES.each { |name| ctx.git branch: name }
+    ctx.after_bundle do
+      ctx.git :init
+      ctx.git add: '.'
+      ctx.git commit: "-m 'Initial commit'"
+      BRANCHES.each { |name| ctx.git branch: name }
+    end
   end
 end
 
@@ -34,12 +36,15 @@ end
 
 class DeviseModule
   def self.call(ctx)
-    return unless ctx.yes? 'Should we add devise for you?'
+    return unless ctx.yes? 'Should we add devise for you? (Yn) : '
     ctx.gem 'devise'
-    ctx.generate 'devise:install'
 
-    model = ctx.ask 'What is the name for Devise ? :'
-    ctx.generate 'devise', model
+    ctx.after_bundle do
+      ctx.generate 'devise:install'
+      model = ctx.ask 'What is the name for Devise model? :'
+      ctx.generate 'devise', model
+    end
+
   end
 end
 
@@ -94,12 +99,14 @@ class TestModule
       ctx.gem 'simplecov', require: false
     end
 
-    ctx.generate 'rspec:install'
-    ctx.run 'echo "--format documentation" >> .rspec'
+    ctx.after_bundle do
+      ctx.generate 'rspec:install'
+      ctx.run 'echo "--format documentation" >> .rspec'
+      ctx.prepend_to_file 'spec/spec_helper.rb', SNIPPETS[:spec_helper_prepend]
+      ctx.create_file 'spec/support/factory_girl.rb', SNIPPETS[:factory_girl]
+      ctx.create_file 'spec/support/database_cleaner.rb', SNIPPETS[:database_cleaner]
+    end
 
-    ctx.prepend_to_file 'spec/spec_helper.rb', SNIPPETS[:spec_helper_prepend]
-    ctx.create_file 'spec/support/factory_girl.rb', SNIPPETS[:factory_girl]
-    ctx.create_file 'spec/support/database_cleaner.rb', SNIPPETS[:database_cleaner]
   end
 end
 
@@ -120,12 +127,7 @@ class ViewModule
 end
 
 
-def execute_modules(hook)
-  MODULES[hook].each do |module_name|
-    klass = eval "#{module_name}Module"
-    klass.call self
-  end
+MODULES.each do |module_name|
+  klass = eval "#{module_name}Module"
+  klass.call self
 end
-
-execute_modules 'before_bundle'
-after_bundle { execute_modules 'after_bundle' }
