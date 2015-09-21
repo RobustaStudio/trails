@@ -1,8 +1,9 @@
 BRANCHES = ["production", "staging"]
 DIRECTORIES = ["app/exceptions", "app/validators", "app/services"]
-MODULES = ["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch"]
+DUPLICATES = ["config/database.yml", "config/secrets.yml"]
+MODULES = ["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate"]
 UNCOMMENT = ["Gemfile", "config/routes.rb"]
-SNIPPETS = {:application_coffee=>"#= require jquery\n#= require jquery_ujs\n", :application_haml=>"!!!\n%html\n  %head\n    %title \"HAML'd\"\n    = stylesheet_link_tag    \"application\"\n    = javascript_include_tag \"application\"\n    = csrf_meta_tags\n  %body\n    = yield\n", :database_cleaner=>"require 'database_cleaner'\nRSpec.configure do |config|\n  config.before(:suite) do\n    DatabaseCleaner.strategy = :transaction\n    DatabaseCleaner.clean_with(:truncation)\n  end\n\n  config.around(:each) do |example|\n    DatabaseCleaner.cleaning do\n      example.run\n    end\n  end\nend\n", :development_prepend=>"# Stop sending emails check log for email body\nconfig.action_mailer.perform_deliveries = false\n", :factory_girl=>"require 'factory_girl'\nRSpec.configure do |config|\n  config.include FactoryGirl::Syntax::Methods\nend\n", :gitignore=>"/.bundle\n/.ruby-gemset\n/.ruby-version\n/.rvmrc\n/config/database.yml\n/config/mail.yml\n/config/secrets.yml\n/config/twilio.yml\n/config/aws.yml\n/log/*.log\n/public/assets\n/public/system\n/tmp\n/.idea\n/.capistrano\n/coverage\ndump.rdb\n", :spec_helper_prepend=>"require 'simplecov'\nDir['./spec/support/**/*.rb'].sort.each { |f| require f }\nSimpleCov.start 'rails'\n"}
+SNIPPETS = {:application_coffee=>"#= require jquery\n#= require jquery_ujs\n", :application_haml=>"!!!\n%html\n  %head\n    %title \"HAML'd\"\n    = stylesheet_link_tag    \"application\"\n    = javascript_include_tag \"application\"\n    = csrf_meta_tags\n  %body\n    = yield\n", :database_cleaner=>"require 'database_cleaner'\nRSpec.configure do |config|\n  config.before(:suite) do\n    DatabaseCleaner.strategy = :transaction\n    DatabaseCleaner.clean_with(:truncation)\n  end\n\n  config.around(:each) do |example|\n    DatabaseCleaner.cleaning do\n      example.run\n    end\n  end\nend\n", :development_prepend=>"# Stop sending emails check log for email body\nconfig.action_mailer.perform_deliveries = false\n", :factory_girl=>"require 'factory_girl'\nRSpec.configure do |config|\n  config.include FactoryGirl::Syntax::Methods\nend\n", :gitignore=>"/.bundle\n/.ruby-gemset\n/.ruby-version\n/.rvmrc\n/config/mail.yml\n/config/twilio.yml\n/config/aws.yml\n/log/*.log\n/public/assets\n/public/system\n/tmp\n/.idea\n/.capistrano\n/coverage\ndump.rdb\n", :spec_helper_prepend=>"require 'simplecov'\nDir['./spec/support/**/*.rb'].sort.each { |f| require f }\nSimpleCov.start 'rails'\n"}
 class AssetsModule
   def self.call(ctx)
     ctx.remove_file 'app/assets/javascripts/application.js'
@@ -36,15 +37,15 @@ end
 
 class DeviseModule
   def self.call(ctx)
-    return unless ctx.yes? 'Should we add devise for you? (Yn) : '
-    ctx.gem 'devise'
+    if ctx.yes?('Should we add devise for you? (yes/no) : ')
+      ctx.gem 'devise'
 
-    ctx.after_bundle do
-      ctx.generate 'devise:install'
-      model = ctx.ask 'What is the name for Devise model? :'
-      ctx.generate 'devise', model
+      ctx.after_bundle do
+        ctx.generate 'devise:install'
+        model = ctx.ask 'What is the name for Devise model? :'
+        ctx.generate 'devise', model
+      end
     end
-
   end
 end
 
@@ -58,6 +59,15 @@ class DirModule
       end
     end
 
+  end
+end
+
+class DuplicateModule
+  def self.call(ctx)
+    DUPLICATES.each do |file|
+      FileUtils.cp file, file.split('.').first + '.example' + File.extname(file)
+      ctx.append_to_file '.gitignore', "/#{file}\n"
+    end
   end
 end
 
@@ -78,6 +88,10 @@ class GemsModule
       ctx.gem 'quiet_assets'
       ctx.gem 'annotate'
     end
+
+    # set mysql2 version explicity
+    # see: http://stackoverflow.com/questions/22932282/gemloaderror-specified-mysql2-for-database-adapter-but-the-gem-is-not-loade
+    ctx.gsub_file "Gemfile", /^gem\s+["']mysql2["'].*$/,"gem 'mysql2', '~> 0.3.18'"
   end
 end
 
