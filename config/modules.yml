@@ -1,12 +1,26 @@
-- View
-- Assets
-- Gitignore
-- Env
-- Dir
-- Test
-- Gems
-- Deployment
-- Devise
-- Uncomment
-- Branch
-- Duplicate
+web:
+  - View
+  - Assets
+  - Gitignore
+  - Env
+  - Dir
+  - Test
+  - Gems
+  - Deployment
+  - Devise
+  - Uncomment
+  - Branch
+  - Duplicate
+api:
+  - View
+  - Assets
+  - Gitignore
+  - Env
+  - Dir
+  - Test
+  - Gems
+  - Deployment
+  - Devise
+  - Uncomment
+  - Branch
+  - Duplicate

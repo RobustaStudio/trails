@@ -11,6 +11,7 @@ class TestModule
     end
 
     ctx.after_bundle do
+      ctx.run 'spring stop' # see: https://github.com/rspec/rspec-rails/issues/996
       ctx.generate 'rspec:install'
       ctx.run 'echo "--format documentation" >> .rspec'
       ctx.prepend_to_file 'spec/spec_helper.rb', SNIPPETS[:spec_helper_prepend]

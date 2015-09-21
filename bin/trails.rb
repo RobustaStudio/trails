@@ -1,7 +1,7 @@
 BRANCHES = ["production", "staging"]
 DIRECTORIES = ["app/exceptions", "app/validators", "app/services"]
 DUPLICATES = ["config/database.yml", "config/secrets.yml"]
-MODULES = ["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate"]
+MODULES = {"web"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate"], "api"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate"]}
 UNCOMMENT = ["Gemfile", "config/routes.rb"]
 SNIPPETS = {:application_coffee=>"#= require jquery\n#= require jquery_ujs\n", :application_haml=>"!!!\n%html\n  %head\n    %title \"HAML'd\"\n    = stylesheet_link_tag    \"application\"\n    = javascript_include_tag \"application\"\n    = csrf_meta_tags\n  %body\n    = yield\n", :database_cleaner=>"require 'database_cleaner'\nRSpec.configure do |config|\n  config.before(:suite) do\n    DatabaseCleaner.strategy = :transaction\n    DatabaseCleaner.clean_with(:truncation)\n  end\n\n  config.around(:each) do |example|\n    DatabaseCleaner.cleaning do\n      example.run\n    end\n  end\nend\n", :development_prepend=>"# Stop sending emails check log for email body\nconfig.action_mailer.perform_deliveries = false\n", :factory_girl=>"require 'factory_girl'\nRSpec.configure do |config|\n  config.include FactoryGirl::Syntax::Methods\nend\n", :gitignore=>"/.bundle\n/.ruby-gemset\n/.ruby-version\n/.rvmrc\n/config/mail.yml\n/config/twilio.yml\n/config/aws.yml\n/log/*.log\n/public/assets\n/public/system\n/tmp\n/.idea\n/.capistrano\n/coverage\ndump.rdb\n", :spec_helper_prepend=>"require 'simplecov'\nDir['./spec/support/**/*.rb'].sort.each { |f| require f }\nSimpleCov.start 'rails'\n"}
 class AssetsModule
@@ -80,6 +80,13 @@ end
 
 class GemsModule
   def self.call(ctx)
+    if ctx.env == 'web' # gems thar only blong to project of type "web"
+      ctx.gem 'kaminari'
+    elsif ctx.env == 'api' # gems thar only blong to project of type "api"
+      ctx.gem 'rabl'
+    end
+
+    # shared gems
     ctx.gem_group :development, :staging, :test do
       gem 'pry'
     end
@@ -88,10 +95,9 @@ class GemsModule
       ctx.gem 'quiet_assets'
       ctx.gem 'annotate'
     end
-
     # set mysql2 version explicity
     # see: http://stackoverflow.com/questions/22932282/gemloaderror-specified-mysql2-for-database-adapter-but-the-gem-is-not-loade
-    ctx.gsub_file "Gemfile", /^gem\s+["']mysql2["'].*$/,"gem 'mysql2', '~> 0.3.18'"
+    ctx.gsub_file 'Gemfile', /^gem\s+["']mysql2["'].*$/, "gem 'mysql2', '~> 0.3.18'"
   end
 end
 
