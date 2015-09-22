@@ -8,6 +8,7 @@
 /log/*.log
 /public/assets
 /public/system
+/public/uploads
 /tmp
 /.idea
 /.capistrano

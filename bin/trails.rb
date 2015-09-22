@@ -1,13 +1,17 @@
 BRANCHES = ["production", "staging"]
 DIRECTORIES = ["app/exceptions", "app/validators", "app/services"]
 DUPLICATES = ["config/database.yml", "config/secrets.yml"]
-MODULES = {"web"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate"], "api"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate"]}
+MODULES = {"web"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate", "Hook", "Readme"], "api"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate", "Hook", "Readme"]}
 UNCOMMENT = ["Gemfile", "config/routes.rb"]
-SNIPPETS = {:application_coffee=>"#= require jquery\n#= require jquery_ujs\n", :application_haml=>"!!!\n%html\n  %head\n    %title \"HAML'd\"\n    = stylesheet_link_tag    \"application\"\n    = javascript_include_tag \"application\"\n    = csrf_meta_tags\n  %body\n    = yield\n", :database_cleaner=>"require 'database_cleaner'\nRSpec.configure do |config|\n  config.before(:suite) do\n    DatabaseCleaner.strategy = :transaction\n    DatabaseCleaner.clean_with(:truncation)\n  end\n\n  config.around(:each) do |example|\n    DatabaseCleaner.cleaning do\n      example.run\n    end\n  end\nend\n", :development_prepend=>"# Stop sending emails check log for email body\nconfig.action_mailer.perform_deliveries = false\n", :factory_girl=>"require 'factory_girl'\nRSpec.configure do |config|\n  config.include FactoryGirl::Syntax::Methods\nend\n", :gitignore=>"/.bundle\n/.ruby-gemset\n/.ruby-version\n/.rvmrc\n/config/mail.yml\n/config/twilio.yml\n/config/aws.yml\n/log/*.log\n/public/assets\n/public/system\n/tmp\n/.idea\n/.capistrano\n/coverage\ndump.rdb\n", :spec_helper_prepend=>"require 'simplecov'\nDir['./spec/support/**/*.rb'].sort.each { |f| require f }\nSimpleCov.start 'rails'\n"}
+SNIPPETS = {:application_coffee=>"#= require jquery\n#= require jquery_ujs\n", :application_haml=>"!!!\n%html\n  %head\n    %title HAML'd\n    = stylesheet_link_tag    \"application\"\n    = javascript_include_tag \"application\"\n    = csrf_meta_tags\n  %body\n    = yield\n", :application_scss=>"", :database_cleaner=>"require 'database_cleaner'\nRSpec.configure do |config|\n  config.before(:suite) do\n    DatabaseCleaner.strategy = :transaction\n    DatabaseCleaner.clean_with(:truncation)\n  end\n\n  config.around(:each) do |example|\n    DatabaseCleaner.cleaning do\n      example.run\n    end\n  end\nend\n", :development_prepend=>"# Stop sending emails check log for email body\nconfig.action_mailer.perform_deliveries = false\n", :factory_girl=>"require 'factory_girl'\nRSpec.configure do |config|\n  config.include FactoryGirl::Syntax::Methods\nend\n", :gitignore=>"/.bundle\n/.ruby-gemset\n/.ruby-version\n/.rvmrc\n/config/mail.yml\n/config/twilio.yml\n/config/aws.yml\n/log/*.log\n/public/assets\n/public/system\n/public/uploads\n/tmp\n/.idea\n/.capistrano\n/coverage\ndump.rdb\n", :spec_helper_prepend=>"require 'simplecov'\nDir['./spec/support/**/*.rb'].sort.each { |f| require f }\nSimpleCov.start 'rails'\n"}
 class AssetsModule
   def self.call(ctx)
+    # js to coffee
     ctx.remove_file 'app/assets/javascripts/application.js'
     ctx.create_file 'app/assets/javascripts/application.coffee', SNIPPETS[:application_coffee]
+    # css to sass
+    ctx.remove_file 'app/assets/stylesheets/application.css'
+    ctx.create_file 'app/assets/stylesheets/application.scss', SNIPPETS[:application_scss]
   end
 end
 
@@ -107,26 +111,46 @@ class GitignoreModule
   end
 end
 
+class HookModule
+  def self.call(ctx)
+    ctx.run 'rails g annotate:install'
+  end
+end
+
+require 'rdoc'
+class ReadmeModule
+  def self.call(ctx)
+    converter = RDoc::Markup::ToMarkdown.new
+    puts 'convert Readme.rdoc'
+    rdoc = File.read('README.rdoc')
+    ctx.create_file 'README.md', converter.convert(rdoc)
+    ctx.remove_file 'README.rdoc'
+  end
+end
+
 class TestModule
   def self.call(ctx)
     ctx.gem_group :development, :staging, :test do
-      ctx.gem 'rspec-rails'
-      ctx.gem 'rspec_junit_formatter'
-      ctx.gem 'rspec-collection_matchers'
       ctx.gem 'factory_girl_rails'
       ctx.gem 'faker'
       ctx.gem 'database_cleaner'
       ctx.gem 'simplecov', require: false
     end
 
+    ctx.gem_group :test do
+      ctx.gem 'rspec-rails'
+      ctx.gem 'rspec-collection_matchers'
+      ctx.gem 'rspec_junit_formatter'
+    end
+
     ctx.after_bundle do
+      ctx.run 'spring stop' # see: https://github.com/rspec/rspec-rails/issues/996
       ctx.generate 'rspec:install'
       ctx.run 'echo "--format documentation" >> .rspec'
       ctx.prepend_to_file 'spec/spec_helper.rb', SNIPPETS[:spec_helper_prepend]
       ctx.create_file 'spec/support/factory_girl.rb', SNIPPETS[:factory_girl]
       ctx.create_file 'spec/support/database_cleaner.rb', SNIPPETS[:database_cleaner]
     end
-
   end
 end
 
