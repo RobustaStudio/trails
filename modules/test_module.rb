@@ -7,9 +7,12 @@ class TestModule
       ctx.gem 'simplecov', require: false
     end
 
-    ctx.gem_group :test do
+    ctx.gem_group :development, :test do
       ctx.gem 'rspec-rails'
       ctx.gem 'rspec-collection_matchers'
+    end
+
+    ctx.gem_group :test do
       ctx.gem 'rspec_junit_formatter'
     end
 

@@ -1,7 +1,7 @@
 class HookModule
   def self.call(ctx)
     ctx.after_bundle do
-      ctx.run 'rails g annotate:install'
+      ctx.generate 'annotate:install'
     end
   end
 end
