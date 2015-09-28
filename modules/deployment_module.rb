@@ -8,5 +8,9 @@ class DeploymentModule
       gem 'capistrano-sidekiq',   require: false
     end
 
+    ctx.after_bundle do
+      ctx.run 'cap install'
+    end
+
   end
 end

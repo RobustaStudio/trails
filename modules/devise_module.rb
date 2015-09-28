@@ -1,6 +1,6 @@
 class DeviseModule
   def self.call(ctx)
-    if ctx.yes?('Should we add devise for you? (yes/no) : ')
+    if ctx.yes?('Should we add devise for you? [Y/n] : ')
       ctx.gem 'devise'
 
       ctx.after_bundle do
