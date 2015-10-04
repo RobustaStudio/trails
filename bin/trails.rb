@@ -175,8 +175,14 @@ class ViewModule
   end
 end
 
+@env = ask("What is type of the project? web/api : ").downcase
+@env = "web" unless (["web", "api"]).include? @env
 
-MODULES.each do |module_name|
+# add env propety to context instance
+def self.env
+  @env
+end
+MODULES[self.env].each do |module_name|
   klass = eval "#{module_name}Module"
   klass.call self
 end
