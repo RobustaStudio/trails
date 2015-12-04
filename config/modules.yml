@@ -11,7 +11,6 @@ web:
   - Uncomment
   - Branch
   - Duplicate
-  - Hook
   - Readme
 api:
   - View
@@ -26,5 +25,4 @@ api:
   - Uncomment
   - Branch
   - Duplicate
-  - Hook
   - Readme

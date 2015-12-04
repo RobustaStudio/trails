@@ -15,6 +15,10 @@ class GemsModule
       ctx.gem 'quiet_assets'
       ctx.gem 'annotate'
     end
+
+    ctx.after_bundle do
+      ctx.generate 'annotate:install'
+    end
     # set mysql2 version explicity
     # see: http://stackoverflow.com/questions/22932282/gemloaderror-specified-mysql2-for-database-adapter-but-the-gem-is-not-loade
     ctx.gsub_file 'Gemfile', /^gem\s+["']mysql2["'].*$/, "gem 'mysql2', '~> 0.3.18'"

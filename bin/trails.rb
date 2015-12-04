@@ -1,7 +1,7 @@
 BRANCHES = ["production", "staging"]
 DIRECTORIES = ["app/exceptions", "app/validators", "app/services"]
 DUPLICATES = ["config/database.yml", "config/secrets.yml"]
-MODULES = {"web"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate", "Hook", "Readme"], "api"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate", "Hook", "Readme"]}
+MODULES = {"web"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate", "Readme"], "api"=>["View", "Assets", "Gitignore", "Env", "Dir", "Test", "Gems", "Deployment", "Devise", "Uncomment", "Branch", "Duplicate", "Readme"]}
 UNCOMMENT = ["Gemfile", "config/routes.rb"]
 SNIPPETS = {:README=>"## README\n\nThis README would normally document whatever steps are necessary to get the\napplication up and running.\n\nThings you may want to cover:\n\n*   Ruby version\n\n*   System dependencies\n\n*   Configuration\n\n*   Database creation\n\n*   Database initialization\n\n*   How to run the test suite\n\n*   Services (job queues, cache servers, search engines, etc.)\n\n*   Deployment instructions\n\n*   ...\n\n\nPlease feel free to use a different markup language if you do not plan to run\n`rake doc:app`.\n", :application_coffee=>"#= require jquery\n#= require jquery_ujs\n", :application_haml=>"!!!\n%html\n  %head\n    %title HAML'd\n    = stylesheet_link_tag    \"application\"\n    = javascript_include_tag \"application\"\n    = csrf_meta_tags\n  %body\n    = yield\n", :application_scss=>"", :database_cleaner=>"require 'database_cleaner'\nRSpec.configure do |config|\n  config.before(:suite) do\n    DatabaseCleaner.strategy = :transaction\n    DatabaseCleaner.clean_with(:truncation)\n  end\n\n  config.around(:each) do |example|\n    DatabaseCleaner.cleaning do\n      example.run\n    end\n  end\nend\n", :development_prepend=>"# Stop sending emails check log for email body\nconfig.action_mailer.perform_deliveries = false\n", :factory_girl=>"require 'factory_girl'\nRSpec.configure do |config|\n  config.include FactoryGirl::Syntax::Methods\nend\n", :gitignore=>"/.bundle\n/.ruby-gemset\n/.ruby-version\n/.rvmrc\n/config/mail.yml\n/config/twilio.yml\n/config/aws.yml\n/log/*.log\n/public/assets\n/public/system\n/public/uploads\n/tmp\n/.idea\n/.capistrano\n/coverage\ndump.rdb\n", :spec_helper_prepend=>"require 'simplecov'\nDir['./spec/support/**/*.rb'].sort.each { |f| require f }\nSimpleCov.start 'rails'\n"}
 class AssetsModule
@@ -103,6 +103,10 @@ class GemsModule
       ctx.gem 'quiet_assets'
       ctx.gem 'annotate'
     end
+
+    ctx.after_bundle do
+      ctx.generate 'annotate:install'
+    end
     # set mysql2 version explicity
     # see: http://stackoverflow.com/questions/22932282/gemloaderror-specified-mysql2-for-database-adapter-but-the-gem-is-not-loade
     ctx.gsub_file 'Gemfile', /^gem\s+["']mysql2["'].*$/, "gem 'mysql2', '~> 0.3.18'"
@@ -112,14 +116,6 @@ end
 class GitignoreModule
   def self.call(ctx)
     ctx.create_file '.gitignore', SNIPPETS[:gitignore]
-  end
-end
-
-class HookModule
-  def self.call(ctx)
-    ctx.after_bundle do
-      ctx.generate 'annotate:install'
-    end
   end
 end
 
