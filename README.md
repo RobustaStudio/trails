@@ -30,7 +30,7 @@ $ rails new blog --skip-turbolinks -T -G -d=mysql -m trails/bin/trails.rb
 
 ## This template does the following
 
-* remove comments from `uncomment.yml` files
+* remove comments from file listed in `uncomment.yml`
 * replace `application.js` with `application.coffee`
 * convert `application.html` layout to HAML
 * replaces `.gitignore` with a better template
